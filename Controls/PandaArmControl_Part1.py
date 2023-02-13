@@ -43,6 +43,16 @@ def force_control(model, data): #TODO:
 
 
     # Set the control inputs
+    jacp = np.zeros((3, model.nv))
+    jacr = np.zeros((3, model.nv))
+    bodyid = mj.mj_name2id(model, mj.mjtObj.mjOBJ_BODY, 'hand')
+    print(bodyid)
+    mj.mj_jacBody(model, data, jacp, jacr, bodyid)
+    jacobian = np.concatenate((jacp, jacr))
+    desired_force = np.array([15, 0, 0, 0, 0, 0])
+    control = np.array(jacobian.T @ desired_force).squeeze()
+    
+    data.ctrl[:7] = data.qfrc_bias[:7] + control
 
 
     # DO NOT CHANGE ANY THING BELOW THIS IN THIS FUNCTION
@@ -63,6 +73,9 @@ def impedance_control(model, data): #TODO:
 
     # Set the desired position
 
+    kp = 100
+    kd = 50
+
 
     # Set the desired velocities
 
@@ -77,26 +90,37 @@ def impedance_control(model, data): #TODO:
 
 
     # Get the position error
+    body = data.body("hand")
+    
+    Kd = 10
+    Kp = 100
+    pdes = np.array([15/Kp + body.xpos[0], body.xpos[1], body.xpos[2], 0, 0, 0])
+    perr = pdes - np.concatenate((body.xpos, [0], [0], [0]))
 
+    # Set the desired joint angle positions
+    # Set the desired joint velocities
+    desired_joint_velocities = np.array([0,0,0,0, 0,0])
+    
+    # Desired gain on position error (K_p)
+    
+    # Desired gain on velocity error (K_d)
 
-    # Get the Jacobian at the desired location on the robot
-
-
-    # This function works by taking in return parameters!!! Make sure you supply it with placeholder
-    # variables
-
-
-    # Compute the impedance control input torques
-
-
-    # Set the control inputs
-
-
-    # DO NOT CHANGE ANY THING BELOW THIS IN THIS FUNCTION
+    # Set the actuator control torques
+    jacp = np.zeros((3, model.nv))
+    jacr = np.zeros((3, model.nv))
+    bodyid = mj.mj_name2id(model, mj.mjtObj.mjOBJ_BODY, 'hand')
+    mj.mj_jacBody(model, data, jacp, jacr, bodyid)
+    jacobian = np.concatenate((jacp, jacr))
+    handVel = np.zeros((6, ))
+    mj.mj_objectVelocity(model, data, mj.mjtObj.mjOBJ_BODY, bodyid, handVel[:6], True)
+    handVel[3:] = 0
+    
+    data.ctrl[:7] = data.qfrc_bias[:7] + jacobian.T @ (Kp*(perr) + Kd * (desired_joint_velocities.flatten() - handVel.flatten()))
 
     # Update force sensor readings
     force[:] = np.roll(force, -1)[:]
     force[-1] = data.sensordata[2]
+    print(force[-1])
     
 
 def position_control(model, data):
@@ -139,7 +163,7 @@ if __name__ == "__main__":
     # compensation callback has been implemented for you. Run the file and play with the model as
     # explained in the PDF
 
-    mj.set_mjcb_control(gravity_comp) #TODO:
+    mj.set_mjcb_control(impedance_control) #TODO:
 
     ################################# Swap Callback Above This Line #################################
 

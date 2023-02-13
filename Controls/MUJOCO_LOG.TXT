@@ -1,0 +1,18 @@
+Sun Feb 12 18:36:21 2023
+ERROR: Python exception raised
+
+Sun Feb 12 18:37:31 2023
+ERROR: Python exception raised
+
+Sun Feb 12 18:51:34 2023
+ERROR: Python exception raised
+
+Sun Feb 12 18:52:31 2023
+ERROR: Python exception raised
+
+Sun Feb 12 18:57:44 2023
+ERROR: Python exception raised
+
+Sun Feb 12 18:58:43 2023
+ERROR: Python exception raised
+
