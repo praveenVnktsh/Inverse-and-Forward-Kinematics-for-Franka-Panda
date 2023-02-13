@@ -32,10 +32,20 @@ def force_control(model, data):
 
     
     # DO NOT CHANGE ANY THING BELOW THIS IN THIS FUNCTION
+    jacp = np.zeros((3, model.nv))
+    jacr = np.zeros((3, model.nv))
+    bodyid = mj.mj_name2id(model, mj.mjtObj.mjOBJ_BODY, 'hand')
+    mj.mj_jacBody(model, data, jacp, jacr, bodyid)
+    jacobian = np.concatenate((jacp, jacr))[:, :7]
+    desired_force = np.array([15, 0, 0, 0, 0, 0])
+    control = np.array(jacobian.T @ desired_force).squeeze()
+    
+    data.ctrl[:7] = data.qfrc_bias[:7] + control
 
     # Force readings updated here
     force[:] = np.roll(force, -1)[:]
     force[-1] = data.sensordata[2]
+    print(force[-1])
 
     # Update control inputs to the whiteboard
     get_board_control(model, data)
@@ -47,11 +57,64 @@ def impedance_control(model, data):
 
 
     # DO NOT CHANGE ANY THING BELOW THIS IN THIS FUNCTION
+    # Implement an impedance control callback here that generates a force of 15 N along the global x-axis,
+    # i.e. the x-axis of the robot arm base. You can use the comments as prompts or use your own flow
+    # of code. The comments are simply meant to be a reference.
+
+    # Instantite a handle to the desired body on the robot
+
+
+    # Set the desired position
+
+
+
+    # Set the desired velocities
+
+
+    # Set the desired orientation (Use numpy quaternion manipulation functions)
+
+
+    # Get the current orientation
+
+
+    # Get orientation error
+
+
+    # Get the position error
+    body = data.body("hand")
+    
+    Kd = 10
+    Kp = 100
+    pdes = np.array([15/Kp + body.xpos[0], body.xpos[1], body.xpos[2], 0, 0, 0])
+    perr = pdes - np.concatenate((body.xpos, [0], [0], [0]))
+
+    # Set the desired joint angle positions
+    # Set the desired joint velocities
+    desired_joint_velocities = np.array([0,0,0,0, 0,0])
+    
+    # Desired gain on position error (K_p)
+    
+    # Desired gain on velocity error (K_d)
+
+    # Set the actuator control torques
+    jacp = np.zeros((3, model.nv))
+    jacr = np.zeros((3, model.nv))
+    bodyid = mj.mj_name2id(model, mj.mjtObj.mjOBJ_BODY, 'hand')
+    mj.mj_jacBody(model, data, jacp, jacr, bodyid)
+    jacobian = np.concatenate((jacp, jacr))[:, :7]
+    handVel = np.zeros((6, ))
+    mj.mj_objectVelocity(model, data, mj.mjtObj.mjOBJ_BODY, bodyid, handVel[:6], True)
+    handVel[3:] = 0
+    
+    data.ctrl[:7] = data.qfrc_bias[:7] + jacobian.T @ (Kp*(perr) + Kd * (desired_joint_velocities.flatten() - handVel.flatten()))
+
+    # Update force sensor readings
 
     # Update force sensor readings
     force[:] = np.roll(force, -1)[:]
     force[-1] = data.sensordata[2]
 
+    print(force[-1])
     # Update control inputs to the whiteboard
     get_board_control(model, data)
 
@@ -100,7 +163,7 @@ if __name__ == "__main__":
     # compensation callback has been implemented for you. Run the file and play with the model as
     # explained in the PDF
 
-    mj.set_mjcb_control(gravity_comp) #TODO:
+    mj.set_mjcb_control(force_control) #TODO:
 
     ################################# Swap Callback Above This Line #################################
 
