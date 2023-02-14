@@ -42,10 +42,14 @@ def force_control(model, data):
     
     data.ctrl[:7] = data.qfrc_bias[:7] + control
 
-    # Force readings updated here
-    force[:] = np.roll(force, -1)[:]
-    force[-1] = data.sensordata[2]
-    print(force[-1])
+    
+    global i
+    print(i)
+    i = i + 1
+    
+    if i < 8000:
+        force[:] = np.roll(force, -1)[:]
+        force[-1] = data.sensordata[2]
 
     # Update control inputs to the whiteboard
     get_board_control(model, data)
@@ -111,10 +115,14 @@ def impedance_control(model, data):
     # Update force sensor readings
 
     # Update force sensor readings
-    force[:] = np.roll(force, -1)[:]
-    force[-1] = data.sensordata[2]
-
-    print(force[-1])
+    global i
+    print(i)
+    i = i + 1
+    
+    if i < 8000:
+        force[:] = np.roll(force, -1)[:]
+        force[-1] = data.sensordata[2]
+    
     # Update control inputs to the whiteboard
     get_board_control(model, data)
 
@@ -166,9 +174,9 @@ if __name__ == "__main__":
     mj.set_mjcb_control(force_control) #TODO:
 
     ################################# Swap Callback Above This Line #################################
-
+    i = 0
     # Initialize variables to store force and time data points
-    force_sensor_max_time = 10
+    force_sensor_max_time = 16
     force = np.zeros(int(force_sensor_max_time/model.opt.timestep))
     time = np.linspace(0, force_sensor_max_time, int(force_sensor_max_time/model.opt.timestep))
 
@@ -176,7 +184,7 @@ if __name__ == "__main__":
     viewer.launch(model, data)   
 
     # Save recorded force and time points as a csv file
-    force = np.reshape(force, (5000, 1))
-    time = np.reshape(time, (5000, 1))
+    force = np.reshape(force, (8000, 1))
+    time = np.reshape(time, (8000, 1))
     plot = np.concatenate((time, force), axis=1)
-    np.savetxt('force_vs_time.csv', plot, delimiter=',')
+    # np.savetxt('force_vs_time_imp_force.csv', plot, delimiter=',')

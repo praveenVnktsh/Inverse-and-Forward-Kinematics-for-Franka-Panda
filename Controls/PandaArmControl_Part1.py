@@ -58,8 +58,13 @@ def force_control(model, data): #TODO:
     # DO NOT CHANGE ANY THING BELOW THIS IN THIS FUNCTION
 
     # Force readings updated here
-    force[:] = np.roll(force, -1)[:]
-    force[-1] = data.sensordata[2]
+    global i
+    print(i)
+    i = i + 1
+    
+    if i < 5000:
+        force[:] = np.roll(force, -1)[:]
+        force[-1] = data.sensordata[2]
     
 # Control callback for an impedance controller
 def impedance_control(model, data): #TODO:
@@ -118,9 +123,14 @@ def impedance_control(model, data): #TODO:
     data.ctrl[:7] = data.qfrc_bias[:7] + jacobian.T @ (Kp*(perr) + Kd * (desired_joint_velocities.flatten() - handVel.flatten()))
 
     # Update force sensor readings
-    force[:] = np.roll(force, -1)[:]
-    force[-1] = data.sensordata[2]
-    print(force[-1])
+    global i
+    print(i)
+    i = i + 1
+    
+    if i < 5000:
+        force[:] = np.roll(force, -1)[:]
+        force[-1] = data.sensordata[2]
+    
     
 
 def position_control(model, data):
@@ -129,7 +139,7 @@ def position_control(model, data):
     body = data.body("hand")
 
     # Set the desired joint angle positions
-    desired_joint_positions = np.array([0,0,0,-1.57079,0,1.57079,-0.7853])
+    desired_joint_positions = np.array([0.5740863127842615, 0.3115965421070712, -0.6796189555630127, -2.0787911387264293, -0.11481848580826978, 3.914113692658869, -2.8646372562972053])
 
     # Set the desired joint velocities
     desired_joint_velocities = np.array([0,0,0,0,0,0,0])
@@ -163,12 +173,13 @@ if __name__ == "__main__":
     # compensation callback has been implemented for you. Run the file and play with the model as
     # explained in the PDF
 
-    mj.set_mjcb_control(impedance_control) #TODO:
+    mj.set_mjcb_control(force_control) #TODO:
 
     ################################# Swap Callback Above This Line #################################
 
     # Initialize variables to store force and time data points
     force_sensor_max_time = 10
+    i = 0
     force = np.zeros(int(force_sensor_max_time/model.opt.timestep))
     time = np.linspace(0, force_sensor_max_time, int(force_sensor_max_time/model.opt.timestep))
 
@@ -179,4 +190,4 @@ if __name__ == "__main__":
     force = np.reshape(force, (5000, 1))
     time = np.reshape(time, (5000, 1))
     plot = np.concatenate((time, force), axis=1)
-    np.savetxt('force_vs_time.csv', plot, delimiter=',')
+    np.savetxt('force_vs_time_force.csv', plot, delimiter=',')

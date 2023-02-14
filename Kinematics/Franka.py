@@ -111,6 +111,7 @@ class FrankArm:
 
 		W[2, 2] =100.0
 		W[3, 3] =100.0
+		W[-1, 0] = 1
 		W[-1, -1] =100.0
 		Winv = np.linalg.inv(W)
 
@@ -131,7 +132,7 @@ class FrankArm:
 
 			xErr = TGoal[:3, 3] - self.Tcurr[-1][:3, 3]
 
-			if np.linalg.norm(xErr) > 0.3:
+			if np.linalg.norm(xErr) > 0.01:
 				xErr *= 0.01/np.linalg.norm(xErr)
 
 			Err[:3] = xErr
